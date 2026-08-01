@@ -137,6 +137,11 @@ final class AppModel {
     var kimiHookStatus: KimiHookInstallationStatus? { hooks.kimiHookStatus }
     var kimiHookStatusTitle: String { hooks.kimiHookStatusTitle }
     var kimiHookStatusSummary: String { hooks.kimiHookStatusSummary }
+    var grokHooksInstalled: Bool { hooks.grokHooksInstalled }
+    var isGrokHookSetupBusy: Bool { hooks.isGrokHookSetupBusy }
+    var grokHookStatus: GrokHookInstallationStatus? { hooks.grokHookStatus }
+    var grokHookStatusTitle: String { hooks.grokHookStatusTitle }
+    var grokHookStatusSummary: String { hooks.grokHookStatusSummary }
     var codexHookStatusTitle: String { hooks.codexHookStatusTitle }
     var codexHookStatusSummary: String { hooks.codexHookStatusSummary }
 
@@ -163,6 +168,7 @@ final class AppModel {
             || hooks.openCodePluginInstalled
             || hooks.geminiHooksInstalled
             || hooks.kimiHooksInstalled
+            || hooks.grokHooksInstalled
     }
     func refreshCodexHookStatus() { hooks.refreshCodexHookStatus() }
     func refreshClaudeHookStatus() { hooks.refreshClaudeHookStatus() }
@@ -193,6 +199,9 @@ final class AppModel {
     func refreshKimiHookStatus() { hooks.refreshKimiHookStatus() }
     func installKimiHooks() { hooks.installKimiHooks() }
     func uninstallKimiHooks() { hooks.uninstallKimiHooks() }
+    func refreshGrokHookStatus() { hooks.refreshGrokHookStatus() }
+    func installGrokHooks() { hooks.installGrokHooks() }
+    func uninstallGrokHooks() { hooks.uninstallGrokHooks() }
     func installClaudeUsageBridge() { hooks.installClaudeUsageBridge() }
     func uninstallClaudeUsageBridge() { hooks.uninstallClaudeUsageBridge() }
     func updateClaudeConfigDirectory(to newDirectory: URL?) { hooks.updateClaudeConfigDirectory(to: newDirectory) }
@@ -1649,6 +1658,7 @@ final class AppModel {
                 if self.hooks.shouldAutoInstall(.cursor) { self.installCursorHooks() }
                 if self.hooks.shouldAutoInstall(.gemini) { self.installGeminiHooks() }
                 if self.hooks.shouldAutoInstall(.kimi) { self.installKimiHooks() }
+                if self.hooks.shouldAutoInstall(.grok) { self.installGrokHooks() }
                 if self.hooks.shouldAutoInstall(.claudeUsageBridge) { self.installClaudeUsageBridge() }
 
                 // Run health checks after install to detect stale paths, conflicts, etc.
