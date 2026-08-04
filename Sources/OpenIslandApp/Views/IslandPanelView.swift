@@ -1040,7 +1040,7 @@ struct IslandPanelView: View {
                 .font(.system(size: 10.5, weight: .semibold, design: .monospaced))
                 .foregroundStyle(.white.opacity(0.42))
 
-            Text("\(provider.peakUsagePercentage)%")
+            Text("\(provider.peakPercentage(showingRemaining: model.usageShowsRemaining))%")
                 .font(.system(size: 11.5, weight: .bold, design: .monospaced))
                 .foregroundStyle(usageColor(for: provider.peakUsedPercentage))
         }
@@ -1056,7 +1056,7 @@ struct IslandPanelView: View {
 
     private func usageHelpText(for provider: UsageProviderPresentation) -> String {
         provider.windows.map { window in
-            var parts = ["\(window.label) \(window.roundedUsedPercentage)%"]
+            var parts = [usageWindowSummary(for: window)]
             if let resetsAt = window.resetsAt,
                let remaining = remainingDurationString(until: resetsAt) {
                 parts.append(remaining)
@@ -1064,6 +1064,20 @@ struct IslandPanelView: View {
             return parts.joined(separator: " ")
         }
         .joined(separator: " · ")
+    }
+
+    /// The chip itself has no room to say which direction it counts, so the
+    /// tooltip spells it out: "5h 84% left" against a bare "5h 16%".
+    private func usageWindowSummary(for window: UsageWindowPresentation) -> String {
+        guard model.usageShowsRemaining else {
+            return "\(window.label) \(window.roundedUsedPercentage)%"
+        }
+
+        return lang.t(
+            "island.usageWindowRemaining",
+            window.label,
+            window.roundedRemainingPercentage
+        )
     }
 
     private func headerPill(_ title: String, tint: Color) -> some View {
@@ -1129,8 +1143,13 @@ private struct UsageProviderPresentation: Identifiable {
         peakWindow?.usedPercentage ?? 0
     }
 
-    var peakUsagePercentage: Int {
-        peakWindow?.roundedUsedPercentage ?? 0
+    /// Percentage rendered in the chip, counting either direction. Colour still
+    /// derives from `peakUsedPercentage`, so red keeps meaning "nearly spent".
+    func peakPercentage(showingRemaining: Bool) -> Int {
+        guard let peakWindow else { return 0 }
+        return showingRemaining
+            ? peakWindow.roundedRemainingPercentage
+            : peakWindow.roundedUsedPercentage
     }
 
     var shortTitle: String {
@@ -1153,6 +1172,12 @@ private struct UsageWindowPresentation: Identifiable {
 
     var roundedUsedPercentage: Int {
         Int(usedPercentage.rounded())
+    }
+
+    /// Headroom left in the window. Clamped because providers occasionally
+    /// report over 100% once a window is exhausted.
+    var roundedRemainingPercentage: Int {
+        Int(min(100, max(0, 100 - usedPercentage)).rounded())
     }
 }
 
