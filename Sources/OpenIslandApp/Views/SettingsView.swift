@@ -418,6 +418,8 @@ struct SetupSettingsPane: View {
     @State private var confirmingUninstallCursor = false
     @State private var confirmingUninstallGemini = false
     @State private var confirmingUninstallKimi = false
+    @State private var confirmingUninstallPi = false
+    @State private var confirmingUninstallOhMyPi = false
     @State private var confirmingUninstallClaudeUsage = false
 
     private var lang: LanguageManager { model.lang }
@@ -602,6 +604,42 @@ struct SetupSettingsPane: View {
                 } message: {
                     Text("This will remove Open Island hooks from ~/.kimi/config.toml.")
                 }
+
+                hookRow(
+                    name: "Pi",
+                    installed: model.piExtensionInstalled,
+                    busy: model.isPiSetupBusy,
+                    requiresBinary: false,
+                    configLocationURL: model.piExtensionStatus?.extensionURL,
+                    installAction: { model.installPiExtension() },
+                    uninstallAction: { confirmingUninstallPi = true }
+                )
+                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallPi) {
+                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
+                        model.uninstallPiExtension()
+                    }
+                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
+                } message: {
+                    Text("This will remove the Open Island extension from ~/.pi/agent/extensions/.")
+                }
+
+                hookRow(
+                    name: "Oh My Pi",
+                    installed: model.ohMyPiExtensionInstalled,
+                    busy: model.isOhMyPiSetupBusy,
+                    requiresBinary: false,
+                    configLocationURL: model.ohMyPiExtensionStatus?.extensionURL,
+                    installAction: { model.installOhMyPiExtension() },
+                    uninstallAction: { confirmingUninstallOhMyPi = true }
+                )
+                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallOhMyPi) {
+                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
+                        model.uninstallOhMyPiExtension()
+                    }
+                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
+                } message: {
+                    Text("This will remove the Open Island extension from ~/.omp/agent/extensions/.")
+                }
             }
 
             Section {
@@ -679,6 +717,8 @@ struct SetupSettingsPane: View {
                     if !model.cursorHooksInstalled { model.installCursorHooks() }
                     if !model.geminiHooksInstalled { model.installGeminiHooks() }
                     if !model.kimiHooksInstalled { model.installKimiHooks() }
+                    if !model.piExtensionInstalled { model.installPiExtension() }
+                    if !model.ohMyPiExtensionInstalled { model.installOhMyPiExtension() }
                     if !model.claudeUsageInstalled { model.installClaudeUsageBridge() }
                 }
                 .disabled(model.hooksBinaryURL == nil || allReady)
@@ -740,7 +780,8 @@ struct SetupSettingsPane: View {
     private var allReady: Bool {
         model.claudeHooksInstalled && model.codexHooksInstalled && model.openCodePluginInstalled
             && model.qoderHooksInstalled && model.qwenCodeHooksInstalled && model.factoryHooksInstalled && model.codebuddyHooksInstalled
-            && model.cursorHooksInstalled && model.geminiHooksInstalled && model.kimiHooksInstalled && model.claudeUsageInstalled
+            && model.cursorHooksInstalled && model.geminiHooksInstalled && model.kimiHooksInstalled
+            && model.piExtensionInstalled && model.ohMyPiExtensionInstalled && model.claudeUsageInstalled
     }
 
     @ViewBuilder

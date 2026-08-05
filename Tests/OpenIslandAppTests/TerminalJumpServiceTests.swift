@@ -12,6 +12,10 @@ final class TerminalJumpServiceTests: XCTestCase {
         var values: [(String, [String])] = []
     }
 
+    private final class StringValuesBox: @unchecked Sendable {
+        var values: [String] = []
+    }
+
     func testGhosttyJumpScriptActivatesWindowAndRetriesFocusUntilItSticks() {
         let target = JumpTarget(
             terminalApp: "Ghostty",
@@ -310,6 +314,72 @@ final class TerminalJumpServiceTests: XCTestCase {
         XCTAssertEqual(result, "Activated Warp. No precise pane mapping available.")
         XCTAssertEqual(keystroker.callCount, 0)
         XCTAssertEqual(openedArguments.values, [["-b", "dev.warp.Warp-Stable"]])
+    }
+
+    func testOttyJumpSelectsTabMatchingTerminalTTY() throws {
+        let openedArguments = OpenedArgumentsBox()
+        let scripts = StringValuesBox()
+        let service = TerminalJumpService(
+            applicationResolver: { bundleIdentifier in
+                bundleIdentifier == "io.appmakes.otty" ? URL(fileURLWithPath: "/Applications/Otty.app") : nil
+            },
+            appRunningChecker: { bundleIdentifier in
+                bundleIdentifier == "io.appmakes.otty"
+            },
+            openAction: { arguments in
+                openedArguments.values.append(arguments)
+            },
+            appleScriptRunner: { script in
+                scripts.values.append(script)
+                return "matched"
+            }
+        )
+
+        let result = try service.jump(
+            to: JumpTarget(
+                terminalApp: "otty",
+                workspaceName: "open-vibe-island-pi",
+                paneTitle: "omp",
+                workingDirectory: "/Users/cheng/Documents/github/open-vibe-island-pi",
+                terminalTTY: "/dev/ttys013"
+            )
+        )
+
+        XCTAssertEqual(result, "Focused the matching Otty tab.")
+        XCTAssertTrue(openedArguments.values.isEmpty)
+        XCTAssertEqual(scripts.values.count, 1)
+        XCTAssertTrue(scripts.values[0].contains("tell application \"Otty\""))
+        XCTAssertTrue(scripts.values[0].contains("(tty of aTab as text) is \"/dev/ttys013\""))
+        XCTAssertTrue(scripts.values[0].contains("set selected of aTab to true"))
+    }
+
+    func testOttyJumpActivatesAppWhenTerminalTTYDoesNotMatch() throws {
+        let openedArguments = OpenedArgumentsBox()
+        let service = TerminalJumpService(
+            applicationResolver: { bundleIdentifier in
+                bundleIdentifier == "io.appmakes.otty" ? URL(fileURLWithPath: "/Applications/Otty.app") : nil
+            },
+            appRunningChecker: { bundleIdentifier in
+                bundleIdentifier == "io.appmakes.otty"
+            },
+            openAction: { arguments in
+                openedArguments.values.append(arguments)
+            },
+            appleScriptRunner: { _ in "" }
+        )
+
+        let result = try service.jump(
+            to: JumpTarget(
+                terminalApp: "otty",
+                workspaceName: "open-vibe-island-pi",
+                paneTitle: "omp",
+                workingDirectory: "/Users/cheng/Documents/github/open-vibe-island-pi",
+                terminalTTY: "/dev/ttys999"
+            )
+        )
+
+        XCTAssertEqual(result, "Activated Otty. Exact pane targeting could not find the live terminal.")
+        XCTAssertEqual(openedArguments.values, [["-b", "io.appmakes.otty"]])
     }
 
     func testUnknownTerminalAppFallsBackToFinderInsteadOfFirstInstalledTerminal() throws {
