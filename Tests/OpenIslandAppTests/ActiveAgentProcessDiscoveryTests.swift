@@ -291,4 +291,143 @@ struct ActiveAgentProcessDiscoveryTests {
         #expect(openCodeSnapshots.first?.workingDirectory == "/tmp/open-island")
         #expect(openCodeSnapshots.first?.terminalTTY == nil)
     }
+
+    @Test
+    func discoverDetectsPiAndOhMyPiProcesses() {
+        let discovery = ActiveAgentProcessDiscovery { executablePath, arguments in
+            if executablePath == "/bin/ps" {
+                return """
+                  101 301 ttys001 /opt/homebrew/bin/pi
+                  102 302 ttys002 /opt/homebrew/bin/omp
+                  301 900 ttys001 -/opt/homebrew/bin/fish
+                  302 900 ttys002 -/opt/homebrew/bin/fish
+                  900 1 ?? /Applications/Ghostty.app/Contents/MacOS/ghostty
+                """
+            }
+            guard executablePath == "/usr/sbin/lsof",
+                  let pid = arguments.dropFirst(2).first else {
+                return nil
+            }
+            return """
+            fcwd
+            n/tmp/\(pid == "101" ? "pi-project" : "omp-project")
+            """
+        }
+
+        let snapshots = discovery.discover()
+
+        #expect(snapshots.contains(.init(
+            tool: .pi,
+            sessionID: nil,
+            workingDirectory: "/tmp/pi-project",
+            terminalTTY: "/dev/ttys001",
+            terminalApp: "Ghostty"
+        )))
+        #expect(snapshots.contains(.init(
+            tool: .ohMyPi,
+            sessionID: nil,
+            workingDirectory: "/tmp/omp-project",
+            terminalTTY: "/dev/ttys002",
+            terminalApp: "Ghostty"
+        )))
+    }
+
+    @Test
+    func discoverRecognizesOttyParentForPiAndOhMyPi() {
+        let discovery = ActiveAgentProcessDiscovery { executablePath, arguments in
+            if executablePath == "/bin/ps" {
+                return """
+                  101 301 ttys001 /opt/homebrew/bin/pi
+                  102 302 ttys002 /opt/homebrew/bin/omp
+                  301 900 ttys001 -/opt/homebrew/bin/fish
+                  302 901 ttys002 -/opt/homebrew/bin/fish
+                  900 1 ?? /Applications/Otty.app/Contents/MacOS/Otty
+                  901 1 ?? /Applications/Otty.app/Contents/MacOS/Otty
+                """
+            }
+            guard executablePath == "/usr/sbin/lsof",
+                  let pid = arguments.dropFirst(2).first else {
+                return nil
+            }
+            return """
+            fcwd
+            n/tmp/\(pid == "101" ? "pi-otty" : "omp-otty")
+            """
+        }
+
+        let snapshots = discovery.discover()
+
+        #expect(snapshots.contains(.init(
+            tool: .pi,
+            sessionID: nil,
+            workingDirectory: "/tmp/pi-otty",
+            terminalTTY: "/dev/ttys001",
+            terminalApp: "Otty"
+        )))
+        #expect(snapshots.contains(.init(
+            tool: .ohMyPi,
+            sessionID: nil,
+            workingDirectory: "/tmp/omp-otty",
+            terminalTTY: "/dev/ttys002",
+            terminalApp: "Otty"
+        )))
+    }
+
+    @MainActor
+    @Test
+    func supportedTerminalAppNormalizesOttyAliases() {
+        let coordinator = ProcessMonitoringCoordinator()
+        #expect(coordinator.supportedTerminalApp(for: "otty") == "Otty")
+        #expect(coordinator.supportedTerminalApp(for: "Otty") == "Otty")
+        #expect(coordinator.supportedTerminalApp(for: " OTTY ") == "Otty")
+    }
+
+    @MainActor
+    @Test
+    func genericPiProcessesDoNotKeepUnrelatedSessionsAlive() {
+        var state = SessionState(
+            sessions: [
+                AgentSession(
+                    id: "pi-a",
+                    title: "Pi A",
+                    tool: .pi,
+                    phase: .completed,
+                    summary: "Ready",
+                    updatedAt: .now
+                ),
+                AgentSession(
+                    id: "omp-b",
+                    title: "OMP B",
+                    tool: .ohMyPi,
+                    phase: .completed,
+                    summary: "Ready",
+                    updatedAt: .now
+                ),
+            ]
+        )
+        let coordinator = ProcessMonitoringCoordinator()
+        coordinator.stateAccessor = { state }
+        coordinator.stateUpdater = { state = $0 }
+
+        let aliveIDs = coordinator.sessionIDsWithAliveProcesses(
+            activeProcesses: [
+                .init(
+                    tool: .pi,
+                    sessionID: nil,
+                    workingDirectory: "/tmp/pi",
+                    terminalTTY: "/dev/ttys001"
+                ),
+                .init(
+                    tool: .ohMyPi,
+                    sessionID: nil,
+                    workingDirectory: "/tmp/omp",
+                    terminalTTY: "/dev/ttys002"
+                ),
+            ],
+            isCodexAppRunning: false
+        )
+
+        #expect(!aliveIDs.contains("pi-a"))
+        #expect(!aliveIDs.contains("omp-b"))
+    }
 }

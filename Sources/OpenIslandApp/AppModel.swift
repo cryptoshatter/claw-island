@@ -137,6 +137,12 @@ final class AppModel {
     var kimiHookStatus: KimiHookInstallationStatus? { hooks.kimiHookStatus }
     var kimiHookStatusTitle: String { hooks.kimiHookStatusTitle }
     var kimiHookStatusSummary: String { hooks.kimiHookStatusSummary }
+    var piExtensionInstalled: Bool { hooks.piExtensionInstalled }
+    var ohMyPiExtensionInstalled: Bool { hooks.ohMyPiExtensionInstalled }
+    var isPiSetupBusy: Bool { hooks.isPiSetupBusy }
+    var isOhMyPiSetupBusy: Bool { hooks.isOhMyPiSetupBusy }
+    var piExtensionStatus: PiExtensionInstallationStatus? { hooks.piExtensionStatus }
+    var ohMyPiExtensionStatus: PiExtensionInstallationStatus? { hooks.ohMyPiExtensionStatus }
     var codexHookStatusTitle: String { hooks.codexHookStatusTitle }
     var codexHookStatusSummary: String { hooks.codexHookStatusSummary }
 
@@ -163,6 +169,8 @@ final class AppModel {
             || hooks.openCodePluginInstalled
             || hooks.geminiHooksInstalled
             || hooks.kimiHooksInstalled
+            || hooks.piExtensionInstalled
+            || hooks.ohMyPiExtensionInstalled
     }
     func refreshCodexHookStatus() { hooks.refreshCodexHookStatus() }
     func refreshClaudeHookStatus() { hooks.refreshClaudeHookStatus() }
@@ -193,6 +201,11 @@ final class AppModel {
     func refreshKimiHookStatus() { hooks.refreshKimiHookStatus() }
     func installKimiHooks() { hooks.installKimiHooks() }
     func uninstallKimiHooks() { hooks.uninstallKimiHooks() }
+    func refreshPiExtensionStatuses() { hooks.refreshPiExtensionStatuses() }
+    func installPiExtension() { hooks.installPiExtension() }
+    func uninstallPiExtension() { hooks.uninstallPiExtension() }
+    func installOhMyPiExtension() { hooks.installOhMyPiExtension() }
+    func uninstallOhMyPiExtension() { hooks.uninstallOhMyPiExtension() }
     func installClaudeUsageBridge() { hooks.installClaudeUsageBridge() }
     func uninstallClaudeUsageBridge() { hooks.uninstallClaudeUsageBridge() }
     func updateClaudeConfigDirectory(to newDirectory: URL?) { hooks.updateClaudeConfigDirectory(to: newDirectory) }
@@ -690,6 +703,7 @@ final class AppModel {
             self?.discovery.scheduleClaudeSessionPersistence()
             self?.discovery.scheduleOpenCodeSessionPersistence()
             self?.discovery.scheduleCursorSessionPersistence()
+            self?.discovery.schedulePiSessionPersistence()
         }
         monitoring.onCodexAppRunningChanged = { [weak self] isRunning in
             guard let self else { return }
@@ -1088,6 +1102,7 @@ final class AppModel {
             hooks.refreshClaudeHookStatus()
             hooks.refreshCCForkHookStatuses()
             hooks.refreshOpenCodePluginStatus()
+            hooks.refreshPiExtensionStatuses()
             hooks.refreshCursorHookStatus()
             hooks.refreshClaudeUsageState()
             hooks.startClaudeUsageMonitoringIfNeeded()
@@ -1478,6 +1493,11 @@ final class AppModel {
         updateLastActionMessage: Bool = true,
         ingress: TrackedEventIngress = .bridge
     ) {
+        if case .sessionHeartbeat = event {
+            state.apply(event)
+            return
+        }
+
         // Snapshot whether this session was already completed before applying
         // the event. Used to suppress duplicate/stale completion notifications
         // (e.g. rollout watcher re-discovering an old completion on startup,
@@ -1511,6 +1531,7 @@ final class AppModel {
         discovery.scheduleClaudeSessionPersistence()
         discovery.scheduleOpenCodeSessionPersistence()
         discovery.scheduleCursorSessionPersistence()
+        discovery.schedulePiSessionPersistence()
 
         // Push relevant events to the Watch/iPhone via the relay
         if let relay = watchRelay {
@@ -1527,6 +1548,8 @@ final class AppModel {
                 case let .geminiSessionMetadataUpdated(p): return p.sessionID
                 case let .openCodeSessionMetadataUpdated(p): return p.sessionID
                 case let .cursorSessionMetadataUpdated(p): return p.sessionID
+                case let .piSessionMetadataUpdated(p): return p.sessionID
+                case let .sessionHeartbeat(p): return p.sessionID
                 case let .actionableStateResolved(p): return p.sessionID
                 }
             }()
@@ -1649,6 +1672,8 @@ final class AppModel {
                 if self.hooks.shouldAutoInstall(.cursor) { self.installCursorHooks() }
                 if self.hooks.shouldAutoInstall(.gemini) { self.installGeminiHooks() }
                 if self.hooks.shouldAutoInstall(.kimi) { self.installKimiHooks() }
+                if self.hooks.shouldAutoInstall(.pi) { self.installPiExtension() }
+                if self.hooks.shouldAutoInstall(.ohMyPi) { self.installOhMyPiExtension() }
                 if self.hooks.shouldAutoInstall(.claudeUsageBridge) { self.installClaudeUsageBridge() }
 
                 // Run health checks after install to detect stale paths, conflicts, etc.
@@ -1804,6 +1829,13 @@ final class AppModel {
             }
 
             return payload.cursorMetadata.lastAssistantMessage ?? "Cursor session metadata updated."
+        case let .piSessionMetadataUpdated(payload):
+            if let currentTool = payload.piMetadata.currentTool {
+                return "\(state.session(id: payload.sessionID)?.tool.displayName ?? "Pi") is running \(currentTool)."
+            }
+            return payload.piMetadata.lastAssistantMessage ?? "Pi session metadata updated."
+        case let .sessionHeartbeat(payload):
+            return "Heartbeat received for session \(payload.sessionID)."
         case let .actionableStateResolved(payload):
             return "Actionable state resolved for session \(payload.sessionID)."
         }

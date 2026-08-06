@@ -111,6 +111,8 @@ struct AgentSessionPresentationTests {
             (.codebuddy, "CodeBuddy"),
             (.cursor, "Cursor"),
             (.kimiCLI, "Kimi"),
+            (.pi, "Pi"),
+            (.ohMyPi, "Oh My Pi"),
         ]
         #expect(expectedNames.map { $0.0.rawValue }.sorted() == AgentTool.allCases.map(\.rawValue).sorted())
 

@@ -222,6 +222,10 @@ extension AgentSession {
             return "Cursor"
         case .kimiCLI:
             return "Kimi"
+        case .pi:
+            return "Pi"
+        case .ohMyPi:
+            return "Oh My Pi"
         }
     }
 

@@ -55,6 +55,7 @@ final class ProcessMonitoringCoordinator {
     private static let cursorStalenessTimeout: TimeInterval = 600  // 10 minutes
     private static let codexAppStalenessTimeout: TimeInterval = 600  // 10 minutes
     private static let claudeDesktopStalenessTimeout: TimeInterval = 600  // 10 minutes
+    private static let piHeartbeatTimeout: TimeInterval = 45
 
     static func monitoringPollInterval(
         isResolvingInitialLiveSessions: Bool,
@@ -175,6 +176,8 @@ final class ProcessMonitoringCoordinator {
                     }
                     hadTrackedLiveSessions = hasTrackedLiveSessions
                 }
+
+                self.expireStalePiHeartbeatSessions()
 
                 let wakeInterval = Self.monitoringWakeInterval(
                     isResolvingInitialLiveSessions: self.isResolvingInitialLiveSessions,
@@ -323,6 +326,19 @@ final class ProcessMonitoringCoordinator {
         onPersistenceNeeded?()
     }
 
+    private func expireStalePiHeartbeatSessions(now: Date = .now) {
+        var local = state
+        let expired = local.expireStalePiHeartbeats(
+            before: now.addingTimeInterval(-Self.piHeartbeatTimeout)
+        )
+        guard !expired.isEmpty else { return }
+
+        _ = local.removeInvisibleSessions()
+        state = local
+        onSessionsReconciled?()
+        onPersistenceNeeded?()
+    }
+
     // MARK: - Event helpers
 
     func markSessionAttached(for event: AgentEvent) {
@@ -364,6 +380,10 @@ final class ProcessMonitoringCoordinator {
         case let .openCodeSessionMetadataUpdated(payload):
             payload.sessionID
         case let .cursorSessionMetadataUpdated(payload):
+            payload.sessionID
+        case let .piSessionMetadataUpdated(payload):
+            payload.sessionID
+        case let .sessionHeartbeat(payload):
             payload.sessionID
         case let .actionableStateResolved(payload):
             payload.sessionID
@@ -508,6 +528,7 @@ final class ProcessMonitoringCoordinator {
                 aliveIDs.insert(session.id)
             }
         }
+
 
         // Cursor sessions: prefer concrete cursor-agent processes when they
         // are visible (Cursor CLI / integrated terminal), then fall back to
@@ -1370,6 +1391,8 @@ final class ProcessMonitoringCoordinator {
             return "WezTerm"
         case "zellij":
             return "Zellij"
+        case "otty":
+            return "Otty"
         // VS Code family
         case "vscode", "code", "visual studio code":
             return "VS Code"
@@ -1440,6 +1463,10 @@ final class ProcessMonitoringCoordinator {
             return "Cursor \(session.id.prefix(8))"
         case .kimiCLI:
             return "Kimi \(session.id.prefix(8))"
+        case .pi:
+            return "Pi \(session.id.prefix(8))"
+        case .ohMyPi:
+            return "Oh My Pi \(session.id.prefix(8))"
         }
     }
 }
