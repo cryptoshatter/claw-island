@@ -8,8 +8,14 @@ final class HookInstallationCoordinator {
     @ObservationIgnored
     let intentStore: AgentIntentStore
 
-    init(intentStore: AgentIntentStore = AgentIntentStore()) {
+    init(
+        intentStore: AgentIntentStore = AgentIntentStore(),
+        piExtensionInstallationManager: PiExtensionInstallationManager = PiExtensionInstallationManager(agent: .pi),
+        ohMyPiExtensionInstallationManager: PiExtensionInstallationManager = PiExtensionInstallationManager(agent: .ohMyPi)
+    ) {
         self.intentStore = intentStore
+        self.piExtensionInstallationManager = piExtensionInstallationManager
+        self.ohMyPiExtensionInstallationManager = ohMyPiExtensionInstallationManager
     }
 
     var codexHookStatus: CodexHookInstallationStatus?
@@ -90,10 +96,10 @@ final class HookInstallationCoordinator {
     private let kimiHookInstallationManager = KimiHookInstallationManager()
 
     @ObservationIgnored
-    private let piExtensionInstallationManager = PiExtensionInstallationManager(agent: .pi)
+    private let piExtensionInstallationManager: PiExtensionInstallationManager
 
     @ObservationIgnored
-    private let ohMyPiExtensionInstallationManager = PiExtensionInstallationManager(agent: .ohMyPi)
+    private let ohMyPiExtensionInstallationManager: PiExtensionInstallationManager
 
     /// Computed so it always reflects the latest `ClaudeConfigDirectory` setting.
     private var claudeStatusLineInstallationManager: ClaudeStatusLineInstallationManager {
@@ -710,12 +716,7 @@ final class HookInstallationCoordinator {
 
             group.addTask { @MainActor [weak self] in
                 guard let self else { return }
-                do {
-                    self.piExtensionStatus = try self.piExtensionInstallationManager.status()
-                    self.ohMyPiExtensionStatus = try self.ohMyPiExtensionInstallationManager.status()
-                } catch {
-                    self.onStatusMessage?("Failed to read Pi extension status: \(error.localizedDescription)")
-                }
+                self.loadPiExtensionStatuses()
             }
         }
     }
@@ -775,12 +776,27 @@ final class HookInstallationCoordinator {
     func refreshPiExtensionStatuses() {
         Task { [weak self] in
             guard let self else { return }
-            do {
-                self.piExtensionStatus = try self.piExtensionInstallationManager.status()
-                self.ohMyPiExtensionStatus = try self.ohMyPiExtensionInstallationManager.status()
-            } catch {
-                self.onStatusMessage?("Failed to read Pi extension status: \(error.localizedDescription)")
-            }
+            self.loadPiExtensionStatuses()
+        }
+    }
+
+    /// Reads Pi and Oh My Pi installation status independently so one
+    /// corrupted manifest cannot block the other agent's status refresh.
+    func loadPiExtensionStatuses() {
+        do {
+            piExtensionStatus = try piExtensionInstallationManager.status()
+        } catch {
+            onStatusMessage?(
+                "Failed to read Pi extension status: \(error.localizedDescription)"
+            )
+        }
+
+        do {
+            ohMyPiExtensionStatus = try ohMyPiExtensionInstallationManager.status()
+        } catch {
+            onStatusMessage?(
+                "Failed to read Oh My Pi extension status: \(error.localizedDescription)"
+            )
         }
     }
 
