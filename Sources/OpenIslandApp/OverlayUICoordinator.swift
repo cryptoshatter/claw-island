@@ -262,8 +262,15 @@ final class OverlayUICoordinator {
 
         let validSelectionIDs = Set(overlayDisplayOptions.map(\.id))
         if !validSelectionIDs.contains(overlayDisplaySelectionID) {
-            overlayDisplaySelectionID = OverlayDisplayOption.automaticID
-            return
+            // Reset to automatic when the saved selection is gone. If the value
+            // actually changes, `didSet` already refreshes placement; when it
+            // is already automatic (e.g. empty option list in tests / headless)
+            // we must still establish diagnostics below so `activeAppearanceProfile`
+            // is correct before any appearance preference writes.
+            if overlayDisplaySelectionID != OverlayDisplayOption.automaticID {
+                overlayDisplaySelectionID = OverlayDisplayOption.automaticID
+                return
+            }
         }
 
         refreshOverlayPlacement()
