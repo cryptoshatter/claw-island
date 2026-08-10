@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="docs/images/readme-banner.svg" alt="Open Island - agents in your menu bar" width="760">
+  <img src="docs/images/readme-banner.svg" alt="Claw Island - agents in your menu bar" width="760">
 </p>
 
-<h1 align="center">Open Island</h1>
+<h1 align="center">Claw Island</h1>
 
 <p align="center">
   <strong>Why pay for a closed-source app just to monitor your coding agents?</strong>
   <br>
-  Open-source, local-first, native macOS companion for AI coding agents.
+  A customized, local-first, native macOS companion for AI coding agents.
   <br><br>
   <a href="README.zh-CN.md">中文</a> | <strong>English</strong>
 </p>
@@ -32,15 +32,27 @@
 
 ---
 
-## What is Open Island?
+## Distribution Information
 
-Open Island sits in your Mac's **notch** (or top bar) and gives you a real-time control surface for your AI coding agents — session status, permission approvals, and instant jump-back to the right terminal. All without leaving your flow.
+| Item | Details |
+|---|---|
+| Project name | **Claw Island** |
+| Version | **v1.1.7** (source snapshot: `830f0ef`) |
+| Supported system | **macOS 14.0 or later** |
+| Supported architectures | **Apple Silicon and Intel** (Universal) |
+| Project source | Forked from [Octane0411/open-vibe-island](https://github.com/Octane0411/open-vibe-island), licensed under [GPL-3.0](LICENSE) |
+
+---
+
+## What is Claw Island?
+
+Claw Island sits in your Mac's **notch** (or top bar) and gives you a real-time control surface for your AI coding agents — session status, permission approvals, and instant jump-back to the right terminal. All without leaving your flow.
 
 Think of it as an open-source [Vibe Island](https://vibeisland.app/) — **free, local-first, and you own every bit of it**.
 
 > *You don't need to pay for a product you can vibe, since you are a vibe coder.*
 
-## Why Open Island?
+## Why Claw Island?
 
 - **Open source** — GPL v3, fork it, mod it, ship your own version
 - **Local-first** — No server, no telemetry, no account. Everything runs on your Mac
@@ -125,8 +137,8 @@ Upgrade later with `brew upgrade --cask open-island`.
 ### Option 3: Build from source
 
 ```bash
-git clone https://github.com/Octane0411/open-vibe-island.git
-cd open-vibe-island
+git clone https://github.com/cryptoshatter/claw-island.git
+cd claw-island
 open Package.swift   # Opens in Xcode — hit Run
 ```
 

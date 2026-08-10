@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="docs/images/readme-banner.svg" alt="Open Island - agents in your menu bar" width="760">
+  <img src="docs/images/readme-banner.svg" alt="Claw Island - agents in your menu bar" width="760">
 </p>
 
-<h1 align="center">Open Island</h1>
+<h1 align="center">Claw Island</h1>
 
 <p align="center">
   <strong>为什么要用闭源付费软件来监控你自己的 coding agents？</strong>
   <br>
-  开源、本地优先、原生 macOS 的 AI coding agent 伴侣应用。
+  基于开源项目定制、本地优先、原生 macOS 的 AI coding agent 伴侣应用。
   <br><br>
   <strong>中文</strong> | <a href="README.md">English</a>
 </p>
@@ -32,15 +32,27 @@
 
 ---
 
-## Open Island 是什么？
+## 发布信息
 
-Open Island 驻留在 Mac 的**刘海区域**（或顶部栏），为你的 AI coding agents 提供实时控制面板——会话状态、权限审批、一键跳回正确的终端。全程不打断你的工作流。
+| 项目 | 说明 |
+|---|---|
+| 项目名称 | **Claw Island** |
+| 版本号 | **v1.1.7**（源码快照：`830f0ef`） |
+| 适配系统 | **macOS 14.0 及以上版本** |
+| 适配架构 | **Apple Silicon 与 Intel**（Universal） |
+| 项目来源 | Fork 自 [Octane0411/open-vibe-island](https://github.com/Octane0411/open-vibe-island)，遵循 [GPL-3.0](LICENSE) 许可证 |
+
+---
+
+## Claw Island 是什么？
+
+Claw Island 驻留在 Mac 的**刘海区域**（或顶部栏），为你的 AI coding agents 提供实时控制面板——会话状态、权限审批、一键跳回正确的终端。全程不打断你的工作流。
 
 可以理解为开源版的 [Vibe Island](https://vibeisland.app/)——**免费、本地运行、代码完全属于你**。
 
 > *You don't need to pay for a product you can vibe, since you are a vibe coder.*
 
-## 为什么选 Open Island？
+## 为什么选 Claw Island？
 
 - **开源** — GPL v3，fork 它、改它、发布你自己的版本
 - **本地优先** — 无服务器、无遥测、无需注册。一切在你的 Mac 上运行
@@ -124,8 +136,8 @@ brew install --cask open-island
 ### 方式三：从源码构建
 
 ```bash
-git clone https://github.com/Octane0411/open-vibe-island.git
-cd open-vibe-island
+git clone https://github.com/cryptoshatter/claw-island.git
+cd claw-island
 open Package.swift   # 在 Xcode 中打开，点击 Run
 ```
 
