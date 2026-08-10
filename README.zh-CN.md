@@ -40,7 +40,7 @@
 | 版本号 | **v1.1.7**（源码快照：`830f0ef`） |
 | 适配系统 | **macOS 14.0 及以上版本** |
 | 适配架构 | **Apple Silicon 与 Intel**（Universal） |
-| 项目来源 | Fork 自 [Octane0411/open-vibe-island](https://github.com/Octane0411/open-vibe-island)，遵循 [GPL-3.0](LICENSE) 许可证 |
+| 项目来源 | 独立发布的二次开发版本，基于 [Octane0411/open-vibe-island](https://github.com/Octane0411/open-vibe-island) v1.1.7，遵循 [GPL-3.0](LICENSE) 许可证 |
 
 ---
 

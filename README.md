@@ -40,7 +40,7 @@
 | Version | **v1.1.7** (source snapshot: `830f0ef`) |
 | Supported system | **macOS 14.0 or later** |
 | Supported architectures | **Apple Silicon and Intel** (Universal) |
-| Project source | Forked from [Octane0411/open-vibe-island](https://github.com/Octane0411/open-vibe-island), licensed under [GPL-3.0](LICENSE) |
+| Project source | Independently published derivative based on [Octane0411/open-vibe-island](https://github.com/Octane0411/open-vibe-island) v1.1.7, licensed under [GPL-3.0](LICENSE) |
 
 ---
 
